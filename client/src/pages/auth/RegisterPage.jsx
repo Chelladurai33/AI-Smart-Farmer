@@ -179,11 +179,26 @@ const RegisterPage = () => {
     if (form.password.length < 8) {
       return setError('Password must be at least 8 characters');
     }
+
+    let cleanPhone = form.phone ? form.phone.trim() : '';
+    if (cleanPhone) {
+      cleanPhone = cleanPhone.replace(/[\s\-\+\(\)]/g, '');
+      if (cleanPhone.startsWith('91') && cleanPhone.length === 12) {
+        cleanPhone = cleanPhone.slice(2);
+      } else if (cleanPhone.startsWith('0') && cleanPhone.length === 11) {
+        cleanPhone = cleanPhone.slice(1);
+      }
+      if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
+        return setError('Phone number must be a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9 (e.g. 9876543210).');
+      }
+    }
+
     try {
       const { user } = await register({
         name: form.name, email: form.email, password: form.password,
-        role: form.role, phone: form.phone,
+        role: form.role, phone: cleanPhone || undefined,
         district: form.district,
+        subDistrict: form.subDistrict || undefined,
         state: form.state,
         village: form.village,
         latitude: form.latitude ? parseFloat(form.latitude) : undefined,
@@ -248,8 +263,8 @@ const RegisterPage = () => {
               <input type="password" className="form-control-custom" placeholder="Repeat password" value={form.confirmPassword} onChange={e => setForm(f => ({ ...f, confirmPassword: e.target.value }))} required />
             </div>
             <div className="col-sm-6">
-              <label className="form-label-custom">Phone</label>
-              <input className="form-control-custom" placeholder="+91 9876543210" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
+              <label className="form-label-custom">Phone <span style={{ fontSize: '0.75rem', fontWeight: 400, color: 'var(--text-muted)' }}>(Optional, 10 digits)</span></label>
+              <input className="form-control-custom" placeholder="e.g. 9876543210" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
             </div>
 
             <div className="col-sm-6">

@@ -43,7 +43,13 @@ const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, curl, Render health checks)
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Also allow any .vercel.app origin or origins explicitly listed in CLIENT_URL
+    if (
+      !origin ||
+      allowedOrigins.includes(origin) ||
+      origin.endsWith('.vercel.app') ||
+      process.env.NODE_ENV !== 'production'
+    ) {
       return callback(null, true);
     }
     callback(new Error(`CORS: origin ${origin} not allowed`));
@@ -68,14 +74,18 @@ app.use(morgan(
 app.use(generalLimiter);
 
 // ─── Health check ──────────────────────────────────────────────────────────────
-app.get('/health', (_req, res) => {
+const healthHandler = (_req, res) => {
   res.json({
+    status: 'ok',
     success: true,
     message: 'AI Farmer Marketplace API is running 🌱',
     timestamp: new Date().toISOString(),
     env: process.env.NODE_ENV || 'development',
   });
-});
+};
+
+app.get('/health', healthHandler);
+app.get('/api/health', healthHandler);
 
 // ─── API Routes ────────────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);

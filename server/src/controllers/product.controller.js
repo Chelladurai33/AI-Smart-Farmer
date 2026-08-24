@@ -19,6 +19,7 @@ const productSchema = z.object({
   district: z.string().min(1).max(100),
   state: z.string().max(100).transform((v) => v?.trim() || 'Tamil Nadu'),
   description: z.string().max(2000).optional(),
+  isActive: z.preprocess((val) => val === 'true' || val === true || val === 1 || val === '1', z.boolean()).optional(),
 });
 
 // ─── GET /products ─────────────────────────────────────────────────────────────
@@ -39,7 +40,7 @@ const getProducts = async (req, res, next) => {
     const limitNum = Math.min(50, Math.max(1, parseInt(limit, 10) || 12));
     const skip = (pageNum - 1) * limitNum;
 
-    const where = { isActive: true };
+    const where = { isActive: true, isDeleted: false };
     if (category) where.categoryId = category;
     if (district) where.district = { contains: district, mode: 'insensitive' };
     if (minPrice || maxPrice) {
@@ -100,7 +101,7 @@ const getProducts = async (req, res, next) => {
 const getMyProducts = async (req, res, next) => {
   try {
     const products = await prisma.product.findMany({
-      where: { farmerId: req.user.id },
+      where: { farmerId: req.user.id, isDeleted: false },
       include: {
         category: true,
         orderItems: { select: { quantity: true, price: true } },
@@ -138,8 +139,15 @@ const getProductById = async (req, res, next) => {
         },
       },
     });
-    if (!product || !product.isActive) {
+    if (!product || product.isDeleted) {
       return sendError(res, 'Product not found.', 404);
+    }
+    if (!product.isActive) {
+      const isOwner = req.user && req.user.id === product.farmerId;
+      const isAdmin = req.user && req.user.role === 'ADMIN';
+      if (!isOwner && !isAdmin) {
+        return sendError(res, 'Product not found.', 404);
+      }
     }
     return sendSuccess(res, product);
   } catch (err) {
@@ -187,7 +195,7 @@ const createProduct = async (req, res, next) => {
 const updateProduct = async (req, res, next) => {
   try {
     const existing = await prisma.product.findUnique({ where: { id: req.params.id } });
-    if (!existing || !existing.isActive) return sendError(res, 'Product not found.', 404);
+    if (!existing || existing.isDeleted) return sendError(res, 'Product not found.', 404);
     if (existing.farmerId !== req.user.id) return sendError(res, 'Not authorized to edit this product.', 403);
 
     const result = productSchema.partial().safeParse(req.body);
@@ -226,13 +234,13 @@ const updateProduct = async (req, res, next) => {
 const deleteProduct = async (req, res, next) => {
   try {
     const existing = await prisma.product.findUnique({ where: { id: req.params.id } });
-    if (!existing || !existing.isActive) return sendError(res, 'Product not found.', 404);
+    if (!existing || existing.isDeleted) return sendError(res, 'Product not found.', 404);
     if (existing.farmerId !== req.user.id) return sendError(res, 'Not authorized to delete this product.', 403);
 
-    // Soft delete
+    // Soft delete by setting isDeleted to true
     await prisma.product.update({
       where: { id: req.params.id },
-      data: { isActive: false },
+      data: { isDeleted: true },
     });
 
     return sendSuccess(res, null, 200, 'Product deleted successfully');

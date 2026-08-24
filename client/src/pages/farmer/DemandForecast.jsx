@@ -162,7 +162,6 @@ const DemandForecast = () => {
                 ))}
               </div>
             )}
-
             {result.peakDemandMonths?.length > 0 && (
               <div style={{ marginTop: '0.75rem' }}>
                 <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>📅 PEAK MONTHS</div>
@@ -171,13 +170,11 @@ const DemandForecast = () => {
                 </div>
               </div>
             )}
-
             {result.exportPotential !== undefined && (
               <div style={{ marginTop: '0.75rem', padding: '0.5rem 0.75rem', borderRadius: 8, background: result.exportPotential ? '#22c55e15' : '#ef444415', color: result.exportPotential ? '#16a34a' : '#dc2626', fontSize: '0.8rem', fontWeight: 600 }}>
                 {result.exportPotential ? '✈️ Export potential available via Tamil Nadu ports' : '🏠 Primarily local/domestic market demand'}
               </div>
             )}
-
             {result.competitorSupply && (
               <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                 Competitor Supply in region: <strong style={{ color: result.competitorSupply === 'LOW' ? '#22c55e' : result.competitorSupply === 'HIGH' ? '#ef4444' : '#f59e0b' }}>{result.competitorSupply}</strong>
@@ -195,6 +192,4 @@ const DemandForecast = () => {
     </div>
   );
 };
-
 export default DemandForecast;
-

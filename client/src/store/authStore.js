@@ -21,7 +21,17 @@ const useAuthStore = create(
           set({ user, accessToken, isAuthenticated: true, isLoading: false });
           return { success: true, user };
         } catch (err) {
-          const message = err.response?.data?.error || 'Login failed. Please try again.';
+          const resData = err.response?.data;
+          let message = resData?.error;
+          if (resData?.errors && typeof resData.errors === 'object') {
+            const fieldMsgs = Object.entries(resData.errors)
+              .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+              .join(' | ');
+            if (fieldMsgs) message = fieldMsgs;
+          }
+          if (!message) {
+            message = err.message || 'Login failed. Please try again.';
+          }
           set({ isLoading: false, error: message });
           throw new Error(message);
         }
@@ -37,7 +47,17 @@ const useAuthStore = create(
           set({ user, accessToken, isAuthenticated: true, isLoading: false });
           return { success: true, user };
         } catch (err) {
-          const message = err.response?.data?.error || 'Registration failed. Please try again.';
+          const resData = err.response?.data;
+          let message = resData?.error;
+          if (resData?.errors && typeof resData.errors === 'object') {
+            const fieldMsgs = Object.entries(resData.errors)
+              .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+              .join(' | ');
+            if (fieldMsgs) message = fieldMsgs;
+          }
+          if (!message) {
+            message = err.message || 'Registration failed. Please try again.';
+          }
           set({ isLoading: false, error: message });
           throw new Error(message);
         }

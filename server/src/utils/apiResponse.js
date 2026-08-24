@@ -22,11 +22,18 @@ const sendError = (res, error = 'Internal server error', statusCode = 500) => {
 };
 
 const sendValidationError = (res, errors) => {
+  const formatted = Object.entries(errors)
+    .map(([field, msgs]) => {
+      const msgList = Array.isArray(msgs) ? msgs.join(', ') : msgs;
+      return `${field}: ${msgList}`;
+    })
+    .join(' | ');
+
   return res.status(400).json({
     success: false,
     message: 'Validation Failed',
     data: null,
-    error: 'One or more fields are invalid.',
+    error: formatted ? `Validation failed - ${formatted}` : 'One or more fields are invalid.',
     errors,
   });
 };

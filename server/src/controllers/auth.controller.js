@@ -46,7 +46,17 @@ const registerSchema = z.object({
     .min(8, 'Password must be at least 8 characters')
     .max(128, 'Password is too long'),
   role: z.enum(['FARMER', 'BUYER']).default('BUYER'),
-  phone: z.string().regex(/^[6-9]\d{9}$/, 'Invalid Indian phone number').optional().or(z.literal('')),
+  phone: z
+    .preprocess((val) => {
+      if (typeof val !== 'string') return val;
+      let cleaned = val.replace(/[\s\-\+\(\)]/g, '');
+      if (cleaned.startsWith('91') && cleaned.length === 12) {
+        cleaned = cleaned.slice(2);
+      } else if (cleaned.startsWith('0') && cleaned.length === 11) {
+        cleaned = cleaned.slice(1);
+      }
+      return cleaned;
+    }, z.string().regex(/^[6-9]\d{9}$/, 'Invalid Indian phone number. Must be 10 digits starting with 6-9').optional().or(z.literal(''))),
   subDistrict: z.string().max(100).optional(),
   village: z.string().max(100).optional(),
   district: z.string().max(100).optional(),
