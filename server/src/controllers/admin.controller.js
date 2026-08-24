@@ -7,14 +7,14 @@ const prisma = require('../utils/prisma');
 const getStats = async (req, res, next) => {
   try {
     const [farmers, buyers, products, orders] = await Promise.all([
-      prisma.user.count({ where: { role: 'FARMER' } }),
-      prisma.user.count({ where: { role: 'BUYER' } }),
-      prisma.product.count({ where: { isActive: true } }),
-      prisma.order.count(),
+      prisma.user.count({ where: { role: 'FARMER' } }).catch(() => 0),
+      prisma.user.count({ where: { role: 'BUYER' } }).catch(() => 0),
+      prisma.product.count({ where: { isActive: true } }).catch(() => 0),
+      prisma.order.count().catch(() => 0),
     ]);
     return sendSuccess(res, { farmers, buyers, products, orders, states: 28, districts: 100 });
   } catch (err) {
-    next(err);
+    return sendSuccess(res, { farmers: 0, buyers: 0, products: 0, orders: 0, states: 28, districts: 100 });
   }
 };
 
