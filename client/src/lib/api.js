@@ -4,7 +4,9 @@ import axios from 'axios';
 const envApiUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
 const API_BASE = envApiUrl
   ? (envApiUrl.endsWith('/api') ? envApiUrl : `${envApiUrl.replace(/\/$/, '')}/api`)
-  : (import.meta.env.MODE === 'production' ? '/api' : 'http://localhost:5000/api');
+  : (import.meta.env.MODE === 'production' 
+      ? 'https://ai-smart-farmer-4nyb.onrender.com/api' 
+      : 'http://localhost:5000/api');
 
 const api = axios.create({
   baseURL: API_BASE,
