@@ -27,7 +27,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ─── Trust proxy (required for Render / reverse proxies) ──────────────────────
-app.set('trust proxy', 1);
+app.set('trust proxy', true);
 
 // ─── Security middleware ───────────────────────────────────────────────────────
 app.use(helmet({

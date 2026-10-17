@@ -11,39 +11,43 @@ const rateLimitMessage = (msg) => ({
 });
 
 /**
- * General API limiter — 300 req per 15 min per IP.
- * Active in ALL environments (removed `skip` that disabled it outside production).
+ * General API limiter — 1500 req per 15 min per IP.
+ * High limit for modern SPA dashboards with multiple concurrent API calls.
  */
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 300,
+  max: 1500,
   message: rateLimitMessage('Too many requests. Please try again in 15 minutes.'),
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS' || req.path === '/health' || req.path === '/' || req.path === '/api/health',
+  validate: { trustProxy: false },
 });
 
 /**
- * Auth limiter — 20 attempts per 15 min.
- * Protects login/register from brute-force.
+ * Auth limiter — 50 attempts per 15 min.
+ * Protects login/register from brute-force while allowing reasonable user retries.
  */
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 50,
   message: rateLimitMessage('Too many authentication attempts. Please try again in 15 minutes.'),
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { trustProxy: false },
 });
 
 /**
- * AI endpoint limiter — 10 req per minute.
- * Prevents AI API quota abuse.
+ * AI endpoint limiter — 30 req per minute.
+ * Prevents AI API quota abuse while allowing active interactive chats.
  */
 const aiLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 10,
+  max: 30,
   message: rateLimitMessage('AI request limit reached. Please wait a moment before trying again.'),
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { trustProxy: false },
 });
 
 /**
