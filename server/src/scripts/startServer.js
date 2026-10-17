@@ -19,6 +19,30 @@ async function main() {
         timeout: 25000,
       });
       logger.info('✅ Database schema is up to date.');
+
+      // Auto-seed essential categories if table is empty
+      try {
+        const prisma = require('../utils/prisma');
+        const count = await prisma.category.count();
+        if (count === 0) {
+          logger.info('🌱 Seeding initial categories into database...');
+          const defaultCats = [
+            'Vegetables',
+            'Fruits',
+            'Grains & Cereals',
+            'Pulses & Legumes',
+            'Spices & Herbs',
+            'Oilseeds',
+            'Flowers',
+          ];
+          for (const name of defaultCats) {
+            await prisma.category.upsert({ where: { name }, update: {}, create: { name } });
+          }
+          logger.info('✅ Initial categories seeded successfully.');
+        }
+      } catch (catErr) {
+        logger.warn('Could not auto-seed categories: ' + catErr.message);
+      }
     } catch (err) {
       logger.error('⚠️  Prisma database sync failed: ' + (err.message || err));
       logger.info('ℹ️  Starting server anyway. Check DATABASE_URL and database connectivity in Render.');

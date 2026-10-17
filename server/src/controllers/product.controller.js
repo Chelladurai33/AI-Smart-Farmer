@@ -5,20 +5,20 @@ const logger = require('../utils/logger');
 const prisma = require('../utils/prisma');
 
 const productSchema = z.object({
-  name: z.string().min(2).max(200),
-  categoryId: z.string().uuid('Invalid category ID'),
+  name: z.string().min(2, 'Crop name must be at least 2 characters').max(200),
+  categoryId: z.string().min(1, 'Category is required'),
   quantity: z.coerce.number().positive('Quantity must be positive'),
   unit: z.string().min(1).max(20),
   expectedPrice: z.coerce.number().positive('Price must be positive'),
-  harvestDate: z.string().refine(
-    (val) => !isNaN(Date.parse(val)),
-    { message: 'Invalid date format' }
-  ),
-  subDistrict: z.string().max(100).optional(),
-  village: z.string().max(100).transform((v) => v?.trim() || 'N/A'),
-  district: z.string().min(1).max(100),
-  state: z.string().max(100).transform((v) => v?.trim() || 'Tamil Nadu'),
-  description: z.string().max(2000).optional(),
+  harvestDate: z.string().optional().transform((val) => {
+    if (!val || isNaN(Date.parse(val))) return new Date().toISOString();
+    return val;
+  }),
+  subDistrict: z.string().max(100).optional().transform((v) => v?.trim() || ''),
+  village: z.string().max(100).optional().transform((v) => v?.trim() || 'N/A'),
+  district: z.string().min(1, 'District is required').max(100),
+  state: z.string().max(100).optional().transform((v) => v?.trim() || 'Tamil Nadu'),
+  description: z.string().max(2000).optional().transform((v) => v?.trim() || ''),
   isActive: z.preprocess((val) => val === 'true' || val === true || val === 1 || val === '1', z.boolean()).optional(),
 });
 
@@ -179,6 +179,23 @@ const createProduct = async (req, res, next) => {
       return sendValidationError(res, result.error.flatten().fieldErrors);
     }
 
+    // Resolve categoryId to a valid database Category UUID
+    let categoryId = result.data.categoryId;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(categoryId);
+    let categoryRecord;
+    if (isUuid) {
+      categoryRecord = await prisma.category.findUnique({ where: { id: categoryId } });
+    }
+    if (!categoryRecord) {
+      // It's a category name or unknown UUID -> find or create by name
+      categoryRecord = await prisma.category.upsert({
+        where: { name: categoryId.trim() },
+        update: {},
+        create: { name: categoryId.trim() },
+      });
+    }
+    categoryId = categoryRecord.id;
+
     let imageUrl = 'https://images.unsplash.com/photo-1595761387015-8cf49d20e6fc?w=400';
     if (req.file) {
       try {
@@ -194,9 +211,10 @@ const createProduct = async (req, res, next) => {
     const product = await prisma.product.create({
       data: {
         ...result.data,
+        categoryId,
         farmerId: req.user.id,
         imageUrl,
-        harvestDate: new Date(result.data.harvestDate),
+        harvestDate: new Date(result.data.harvestDate || Date.now()),
       },
       include: { category: true },
     });
@@ -220,6 +238,21 @@ const updateProduct = async (req, res, next) => {
     }
 
     const updateData = { ...result.data };
+    if (updateData.categoryId) {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(updateData.categoryId);
+      let categoryRecord;
+      if (isUuid) {
+        categoryRecord = await prisma.category.findUnique({ where: { id: updateData.categoryId } });
+      }
+      if (!categoryRecord) {
+        categoryRecord = await prisma.category.upsert({
+          where: { name: updateData.categoryId.trim() },
+          update: {},
+          create: { name: updateData.categoryId.trim() },
+        });
+      }
+      updateData.categoryId = categoryRecord.id;
+    }
     if (req.file) {
       try {
         const uploaded = await cloudinaryService.uploadImage(req.file.buffer, 'products');
