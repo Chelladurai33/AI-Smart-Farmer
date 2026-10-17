@@ -2,6 +2,14 @@ import axios from 'axios';
 
 // Support VITE_API_BASE_URL or VITE_API_URL environment variables from Vercel
 const envApiUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
+
+if (import.meta.env.MODE === 'production' && !envApiUrl) {
+  console.warn(
+    '[AI Farmer Market] VITE_API_BASE_URL is not set. Falling back to default Render backend. ' +
+    'Set VITE_API_BASE_URL in your Vercel Project Settings > Environment Variables.'
+  );
+}
+
 const API_BASE = envApiUrl
   ? (envApiUrl.endsWith('/api') ? envApiUrl : `${envApiUrl.replace(/\/$/, '')}/api`)
   : (import.meta.env.MODE === 'production' 
@@ -11,7 +19,7 @@ const API_BASE = envApiUrl
 const api = axios.create({
   baseURL: API_BASE,
   withCredentials: true,    // Send cookies (refresh token)
-  timeout: 30000,           // 30 s timeout
+  timeout: 60000,           // 60 s timeout to allow Render free tier spin-up
 });
 
 // ─── Request interceptor: attach JWT access token ──────────────────────────────

@@ -38,7 +38,8 @@ app.use(helmet({
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
   .split(',')
-  .map(o => o.trim());
+  .map(o => o.trim())
+  .filter(Boolean);
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -48,6 +49,7 @@ app.use(cors({
       !origin ||
       allowedOrigins.includes(origin) ||
       origin.endsWith('.vercel.app') ||
+      origin.endsWith('.onrender.com') ||
       process.env.NODE_ENV !== 'production'
     ) {
       return callback(null, true);
@@ -56,7 +58,8 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  maxAge: 86400, // Cache preflight requests for 24 hours to optimize request latency
 }));
 
 // ─── Body parsing ──────────────────────────────────────────────────────────────
