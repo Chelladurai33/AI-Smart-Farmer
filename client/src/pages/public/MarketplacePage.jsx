@@ -13,6 +13,15 @@ const MarketplacePage = () => {
   const [cart, setCart] = useState(() => JSON.parse(localStorage.getItem('cart') || '[]'));
 
   useEffect(() => {
+    api.get('/products/categories')
+      .then(r => {
+        const list = r.data.data || [];
+        if (list.length > 0) setCategories(list.map(c => c.name));
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
     fetchProducts();
   }, [filters]);
 
@@ -25,7 +34,9 @@ const MarketplacePage = () => {
       setProducts(res.data.data?.products || []);
       setPagination(res.data.data?.pagination || {});
       const cats = [...new Set((res.data.data?.products || []).map(p => p.category?.name).filter(Boolean))];
-      setCategories(cats);
+      if (cats.length > 0) {
+        setCategories(prev => [...new Set([...prev, ...cats])]);
+      }
     } catch {}
     setLoading(false);
   };

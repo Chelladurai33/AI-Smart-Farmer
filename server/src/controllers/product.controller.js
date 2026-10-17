@@ -37,21 +37,37 @@ const getProducts = async (req, res, next) => {
     } = req.query;
 
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
-    const limitNum = Math.min(50, Math.max(1, parseInt(limit, 10) || 12));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 12));
     const skip = (pageNum - 1) * limitNum;
 
     const where = { isActive: true, isDeleted: false };
-    if (category) where.categoryId = category;
-    if (district) where.district = { contains: district, mode: 'insensitive' };
-    if (minPrice || maxPrice) {
-      where.expectedPrice = {};
-      if (minPrice) where.expectedPrice.gte = parseFloat(minPrice);
-      if (maxPrice) where.expectedPrice.lte = parseFloat(maxPrice);
+    if (category && typeof category === 'string' && category.trim()) {
+      const cleanCategory = category.trim();
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanCategory);
+      if (isUuid) {
+        where.categoryId = cleanCategory;
+      } else {
+        where.category = { name: { equals: cleanCategory, mode: 'insensitive' } };
+      }
     }
-    if (search) {
+    if (district && typeof district === 'string' && district.trim()) {
+      where.district = { contains: district.trim(), mode: 'insensitive' };
+    }
+    if (minPrice || maxPrice) {
+      const min = parseFloat(minPrice);
+      const max = parseFloat(maxPrice);
+      const priceFilter = {};
+      if (!isNaN(min)) priceFilter.gte = min;
+      if (!isNaN(max)) priceFilter.lte = max;
+      if (Object.keys(priceFilter).length > 0) {
+        where.expectedPrice = priceFilter;
+      }
+    }
+    if (search && typeof search === 'string' && search.trim()) {
+      const cleanSearch = search.trim();
       where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
+        { name: { contains: cleanSearch, mode: 'insensitive' } },
+        { description: { contains: cleanSearch, mode: 'insensitive' } },
       ];
     }
 
