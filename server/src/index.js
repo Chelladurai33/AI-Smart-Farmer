@@ -87,6 +87,7 @@ const healthHandler = (_req, res) => {
   });
 };
 
+app.get('/', healthHandler);
 app.get('/health', healthHandler);
 app.get('/api/health', healthHandler);
 

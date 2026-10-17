@@ -5,8 +5,10 @@ const logger = require('./logger');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  // Render Postgres requires SSL in production
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  // Render Postgres requires SSL in production or for external connections
+  ssl: (process.env.NODE_ENV === 'production' || process.env.DATABASE_URL?.includes('render.com') || process.env.DATABASE_URL?.includes('sslmode=require'))
+    ? { rejectUnauthorized: false }
+    : false,
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
