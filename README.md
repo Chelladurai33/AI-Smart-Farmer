@@ -8,17 +8,14 @@ A production-ready full-stack platform connecting farmers directly with buyers, 
 
 | Layer | Choice |
 |-------|--------|
-| **Frontend** | React 19 + Vite + React Router DOM v7 + Bootstrap 5 |
-| **Backend** | Node.js 20+ + Express.js 5 |
-| **Database** | PostgreSQL 15+ |
-| **ORM** | Prisma ORM |
-| **Auth** | JWT (access + refresh tokens with cookie/header support) |
+| **Frontend** | React 19 + Vite |
+| **Backend** | Node.js + Express.js |
+| **Database** | SQL|
+| **Auth** | JWT |
 | **AI Engine** | Google Gemini API + Gemini Vision + Smart Instant Engine |
 | **Image Storage** | Cloudinary |
-| **Maps & Location** | Google Maps JavaScript API + Places API |
+| **Maps & Location** | Google Maps JavaScript API|
 | **Weather** | OpenWeather API |
-| **Validation & State** | Zod + Zustand |
-| **Charts & PDF** | Recharts + pdf-lib |
 
 ---
 
@@ -56,9 +53,9 @@ ai-farmer-marketplace/
 
 ### 1. Prerequisites
 
-- Node.js 20+
-- PostgreSQL 15+
-- npm or yarn
+- Node.js
+- SQL
+- npm
 
 ### 2. Installation
 
@@ -117,7 +114,7 @@ npm run dev
 ## ☁️ Deployment Guide (Render + Vercel)
 
 This project is optimized for a decoupled production architecture:
-- **Backend API**: Hosted on **[Render](https://render.com)** (Node.js Web Service + PostgreSQL)
+- **Backend API**: Hosted on **[Render](https://render.com)** (Node.js Web Service + SQL)
 - **Frontend SPA**: Hosted on **[Vercel](https://vercel.com)** (React + Vite at the global Edge)
 
 ---
